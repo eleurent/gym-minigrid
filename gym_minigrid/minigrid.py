@@ -1,3 +1,4 @@
+import copy
 import math
 import gym
 from enum import IntEnum
@@ -1333,3 +1334,17 @@ class MiniGridEnv(gym.Env):
             return r.getPixmap()
 
         return r
+
+    def __deepcopy__(self, memo):
+        """
+            Perform a deep copy but without copying the environment viewer.
+        """
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k not in ['grid_render']:
+                setattr(result, k, copy.deepcopy(v, memo))
+            else:
+                setattr(result, k, None)
+        return result
