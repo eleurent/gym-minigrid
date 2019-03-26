@@ -657,6 +657,12 @@ class MiniGridEnv(gym.Env):
         # Done completing task
         done = 6
 
+        # 2D moves
+        move_right = 7
+        move_down = 8
+        move_left = 9
+        move_up = 10
+
     def __init__(
         self,
         grid_size=None,
@@ -1145,6 +1151,23 @@ class MiniGridEnv(gym.Env):
         elif action == self.actions.done:
             pass
 
+        # Move actions
+        elif action == self.actions.move_right:
+            self.step_count -= 1
+            self.agent_dir = 0
+            return MiniGridEnv.step(self, self.actions.forward)
+        elif action == self.actions.move_down:
+            self.step_count -= 1
+            self.agent_dir = 1
+            return MiniGridEnv.step(self, self.actions.forward)
+        elif action == self.actions.move_left:
+            self.step_count -= 1
+            self.agent_dir = 2
+            return MiniGridEnv.step(self, self.actions.forward)
+        elif action == self.actions.move_up:
+            self.step_count -= 1
+            self.agent_dir = 3
+            return MiniGridEnv.step(self, self.actions.forward)
         else:
             assert False, "unknown action"
 

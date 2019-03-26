@@ -1,6 +1,6 @@
 from gym_minigrid.minigrid import *
 from gym_minigrid.register import register
-from operator import add
+
 
 class CollectEnv(MiniGridEnv):
     """
@@ -31,7 +31,8 @@ class CollectEnv(MiniGridEnv):
             see_through_walls=True,
         )
         # Allow only 3 actions permitted: left, right, forward
-        self.action_space = spaces.Discrete(self.actions.forward + 1)
+        self.action_space = spaces.Discrete(self.actions.move_up - self.actions.move_right + 1)
+        self.action_offset = self.actions.move_right
 
     def _gen_grid(self, width, height):
         # Create an empty grid
@@ -58,6 +59,7 @@ class CollectEnv(MiniGridEnv):
         self.mission = "collect the green goals while avoiding the lava"
 
     def step(self, action):
+        action = action + self.action_offset
         obs, reward, done, info = MiniGridEnv.step(self, action)
 
         cell = self.grid.get(*self.agent_pos)
