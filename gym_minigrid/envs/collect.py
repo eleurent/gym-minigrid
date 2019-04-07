@@ -108,12 +108,17 @@ class CollectEnv(MiniGridEnv):
 
     def step(self, action):
         action = action + self.action_offset
+        if np.random.random() < 0.0:
+            action = np.random.choice(range(self.action_offset, self.action_offset + self.action_space.n))
         obs, reward, done, info = MiniGridEnv.step(self, action)
 
         cell = self.grid.get(*self.agent_pos)
         if cell is not None and cell.type == 'goal':
             self.grid.set(*self.agent_pos, None)  # Goals are collectable...
             done = False                          # ...and not terminal
+            reward -= (np.random.random() < 0.15)
+        else:
+            reward += (np.random.random() < 0.15)
 
         return obs, reward, done, info
 
