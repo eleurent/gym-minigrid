@@ -21,12 +21,16 @@ class CollectEnv(MiniGridEnv):
             agent_start_dir=0,
             n_goals=4,
             num_crossings=6,
-            max_steps=20
+            max_steps=10,
+            action_noise=0.,
+            reward_noise=0.
     ):
         self.agent_start_pos = agent_start_pos
         self.agent_start_dir = agent_start_dir
         self.n_goals = int(n_goals)
         self.num_crossings = int(num_crossings)
+        self.action_noise = action_noise
+        self.reward_noise = reward_noise
 
         super().__init__(
             grid_size=size,
@@ -36,7 +40,6 @@ class CollectEnv(MiniGridEnv):
         )
         # Allow only 3 actions permitted: left, right, forward
         self.action_space = spaces.Discrete(self.actions.forward + 1)
-        self.action_offset = 0*self.actions.move_right
 
     def _crossing_grid(self, width, height, num_crossings=1, obstacle_type=Lava):
         assert width % 2 == 1 and height % 2 == 1  # odd size
@@ -107,34 +110,47 @@ class CollectEnv(MiniGridEnv):
         self.mission = "collect the green goals while avoiding the lava"
 
     def step(self, action):
-        action = action + self.action_offset
-        if np.random.random() < 0.0:
-            action = np.random.choice(range(self.action_offset, self.action_offset + self.action_space.n))
+        # Action noise
+        if self.np_random.rand() < self.action_noise:
+            action = self.np_random.choice(range(self.action_space.n))
+
+        # Step
         obs, reward, done, info = MiniGridEnv.step(self, action)
 
+        # Goals are collectable and not terminal
         cell = self.grid.get(*self.agent_pos)
         if cell is not None and cell.type == 'goal':
-            self.grid.set(*self.agent_pos, None)  # Goals are collectable...
-            done = False                          # ...and not terminal
-            reward -= (np.random.random() < 0.15)
-        else:
-            reward += (np.random.random() < 0.15)
+            self.grid.set(*self.agent_pos, None)
+            done = False
+
+        # Reward bernoulli perturbation
+        if self.np_random.rand() < self.reward_noise:
+            reward = 1 - reward
 
         return obs, reward, done, info
 
     def _reward(self):
         """
-        Compute the reward to be given upon goal collection
+        Reward received upon goal collection
         """
         return 1
 
 
 class CollectEnv9x9(CollectEnv):
     def __init__(self):
-        super().__init__(size=9, agent_start_pos=None, n_goals=15, num_crossings=5)
+        super().__init__(size=9, agent_start_pos=None, n_goals=15, num_crossings=0)
+
+
+class CollectEnvStochastic9x9(CollectEnv):
+    def __init__(self):
+        super().__init__(size=9, agent_start_pos=None, n_goals=15, num_crossings=0, reward_noise=0.15)
 
 
 register(
     id='MiniGrid-Collect-9x9-v0',
     entry_point='gym_minigrid.envs:CollectEnv9x9'
+)
+register(
+    id='MiniGrid-Collect-Stochastic-9x9-v0',
+    entry_point='gym_minigrid.envs:CollectEnvStochastic9x9'
 )
